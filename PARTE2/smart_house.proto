@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+
+message RequestIdentification {
+    string msgn = 1;
+
+}
+
+message DeviceInfo {
+    string name = 1;
+    string ip = 2;
+    int32 port = 3;
+}
+
+message TemperatureReading {
+    float temperature = 1;
+}
+
+message LampControl {
+    bool is_on = 1;
+}
+
+message TvChannel {
+    string channel = 1;
+}
+
+message GatewayMessage {
+    enum MessageType {
+        DEVICE_IDENTIFICATION = 0;
+        TEMPERATURE_READING = 1;
+        LAMP_CONTROL = 2;
+        TV_CHANNEL = 3;
+        REQUEST_IDENTIFICATION = 4;
+    }
+    
+    MessageType type = 1;
+    oneof message {
+        DeviceInfo device_info = 2;
+        TemperatureReading temp_reading = 3;
+        LampControl lamp_control = 4;
+        TvChannel tv_channel = 5;
+        RequestIdentification request_identification = 6;
+    }
+}
