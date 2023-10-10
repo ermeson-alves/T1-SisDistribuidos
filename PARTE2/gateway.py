@@ -9,46 +9,48 @@ class Gateway:
     def __init__(self):
         # Armazena informações dos Equipamentos
         self.devices = {} 
-        # Envia mensagem solicitando que equipamentos se identifiquem
-        receive_id_thread = threading.Thread(target=self.receive_identification_messages)
-        # Inicia linha de comando da aplicação
+        # Envia mensagem solicitando que equipamentos se identifiquem:
+        send_disc_thread = threading.Thread(target=self.send_discovery_messages)
+        # Inicia o servidor tcp:
+        start_tcp_thread = threading.Thread(target=self.start_tcp_server)
+        # Inicia linha de comando da aplicação:
         command_line_thread = threading.Thread(target=self.command_line_interface)
 
-        receive_id_thread.start()
+        start_tcp_thread.start()
+        print(f"The TCP Server is listening on the port {TCP_SERVER_PORT}\n")
+        send_disc_thread.start()
+        print("Gateway sent identification request...\n")
         command_line_thread.start()
 
 
-    def receive_identification_messages(self):
+    def send_discovery_messages(self):
         '''Essa função serve para utilizar o mecanismo de comunicação em grupo Multicast e assim
         descobrir os equipamentos inteligentes da casa'''
 
-        # Create a UDP socket para enviar solicitação de identificação
-        udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-        
-        # Bind to the server address
-        udp_socket.bind((MULTICAST_GROUP, MULTICAST_PORT))
-
-        # Set up multicast group
-        mcast_group = socket.inet_aton(MULTICAST_GROUP) # converte ip para o formato binario
-        mreq = struct.pack('4sL', mcast_group, socket.INADDR_ANY) # cria estrutura dados de bytes 
-        udp_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq) # configurando o socket para se juntar ao grupo multicast
-
-        print("Gateway is waiting for device identification messages...")
+        # Criar um UDP socket para enviar solicitação de identificação
+        MULTICAST_TTL = 2
+        # udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        udp_server_socket.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, MULTICAST_TTL) # configurando o socket para se juntar ao grupo multicast
 
         # Enviar pedido de identificação:
-        # request_msgn = proto.RequestIdentification(msgn="Requested identification!")
-        # udp_socket.sendto(request_msgn.SerializeToString(), (MULTICAST_GROUP, MULTICAST_PORT))
+        request_msgn = proto.RequestIdentification(msgn="Requested identification!")
+        udp_server_socket.sendto(request_msgn.SerializeToString(), (MULTICAST_GROUP, MULTICAST_PORT))
 
+        # Implementar lógica para receber a mensagens de identificação
+
+
+    def start_tcp_server(self, ip=TCP_SERVER_ADDRESS, port=TCP_SERVER_PORT):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind((ip, port))
+        s.listen(1)
         while True:
-            data, addr = udp_socket.recvfrom(2024)
-            device_info = proto.DeviceInfo()
-            device_info.ParseFromString(data)
-            self.devices[device_info.name] = (device_info.ip, device_info.port)
-            print(f"Device {device_info.name} identified with IP {device_info.ip}, Port {device_info.port}")
-            with open('./dispositivos.txt', 'w') as f: 
-                f.write(json.dumps(self.devices))
-
+            conn, addr = s.accept()
+            data = conn.recv(2024)
+            if not data: break
+            print(f"Recebido: {data}")
+            conn.sendall(data.upper())
+            conn.close()
 
 
     def command_line_interface(self):
@@ -65,6 +67,7 @@ class Gateway:
                 self.send_lamp_control(command)
             else:
                 print("Invalid command.")
+    
 
     def send_lamp_control(self, command):
         if 'lamp' in self.devices:
@@ -78,6 +81,7 @@ class Gateway:
         tcp_socket.connect((ip, port))
         tcp_socket.send(message.SerializeToString())
         tcp_socket.close()
+
 
 if __name__ == "__main__":
     gateway = Gateway()

@@ -2,13 +2,32 @@ import socket
 import time
 import smart_house_pb2 as proto
 import random
+import struct 
+from config import *
 
 class TemperatureSensor:
     def __init__(self):
         self.ip = '127.0.0.1'
         self.port = 7030
 
-    
+    def send_identification(self):
+        '''Essa função serve para enviar a identificação do equipamento, com nomo, ip e porta'''
+
+        # Escutar mensagem solicitante:
+        udp_client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  
+        # mcast_group = socket.inet_aton(MULTICAST_GROUP) # converte ip para o formato binario
+        udp_client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # configurando o socket para se juntar ao grupo multicast
+        
+        udp_client_socket.bind((MULTICAST_GROUP, MULTICAST_PORT))
+        mreq = struct.pack('4sL', socket.inet_aton(MULTICAST_GROUP), socket.INADDR_ANY) # cria estrutura dados de bytes 
+        udp_client_socket.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq) # configurando o socket para se juntar ao grupo multicast
+
+        i_send_identification = False
+        while i_send_identification==False:
+            data, addr = udp_client_socket.recvfrom(2024)
+            msgn = proto.RequestIdentification()
+            msgn.ParseFromString(data)
+            print(msgn)
 
     def start(self):
         while True:
