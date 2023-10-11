@@ -14,7 +14,7 @@ class Equipment:
 
 
     def send_identification(self):
-        '''Essa função serve para enviar a identificação do equipamento, com nome, ip e porta'''
+        '''Essa função serve para enviar a identificação do equipamento, com tipo, nome, ip e porta.'''
 
         # Escutar mensagem solicitante:
         udp_client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)  
@@ -50,7 +50,7 @@ class Equipment:
 
 
     def send_msgn_TCP(self, msgn, sucess_msg="Mensagem enviada com sucesso!"):
-        '''A mensagem é um tipo de mensagem definida com protocol buffers no aquivo .proto'''
+        '''Responsável por enviar uma mensagem definida com protocol buffers no aquivo .proto'''
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((TCP_SERVER_ADDRESS, TCP_SERVER_PORT))
@@ -69,6 +69,8 @@ class Equipment:
 
     def setup_server(self, th_function, str_server = ''):
         '''
+        Essa função configura o servidor TCP de alguns equipamentos para comunicação com o Gateway.
+
         th_function é a função que escuta os comandos de ação recebidos
         str_server é a string exibida ao configurar o servidor TCP'''
         self.tcp_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -17,7 +17,7 @@ class Gateway:
         command_line_thread = threading.Thread(target=self.command_line_interface)
 
         start_tcp_thread.start()
-        print(f"The TCP Server is listening on the port {TCP_SERVER_PORT}\n")
+        print(f"The TCP Server of Gateway is listening on the port {TCP_SERVER_PORT}\n")
         send_disc_thread.start()
         print("Gateway sent identification request...\n")
         command_line_thread.start()
@@ -37,7 +37,6 @@ class Gateway:
         request_msgn = proto.RequestIdentification(msgn="Requested identification!")
         udp_server_socket.sendto(request_msgn.SerializeToString(), (MULTICAST_GROUP, MULTICAST_PORT))
 
-        # Implementar lógica para receber a mensagens de identificação
 
 
     def start_tcp_server(self, ip=TCP_SERVER_ADDRESS, port=TCP_SERVER_PORT, msgn=''):

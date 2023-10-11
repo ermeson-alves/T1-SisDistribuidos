@@ -27,6 +27,7 @@ class TemperatureSensor(Equipment):
         udp_socket.sendto(message.SerializeToString(), (self.ip, self.port))
         udp_socket.close()
 
+
 if __name__ == "__main__":
     temp_sensor = TemperatureSensor(proto.DeviceInfo.DeviceType.TEMP_SENSOR,
                                     name="Sensor 1",
