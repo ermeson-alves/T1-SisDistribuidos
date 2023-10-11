@@ -16,13 +16,14 @@ class Lamp(Equipment):
         super().__init__(dtype, name, ip, port)
         self.is_on = is_on
 
-
+    
     def listen_for_commands(self):
         while True:
             client_socket, _ = self.tcp_server.accept()
             data = client_socket.recv(1024)
             if not data:
                 break
+            
             command = proto.LampControl()
             command.ParseFromString(data)
             self.is_on = command.is_on
@@ -38,6 +39,5 @@ if __name__ == "__main__":
                 is_on = False)
     
     lamp.send_identification()
-    lamp.setup_server("Lamp is ready to receive commands.")
+    lamp.setup_server(th_function=lamp.listen_for_commands, str_server="Lamp is ready to receive commands.")
     
-

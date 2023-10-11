@@ -35,3 +35,4 @@ if __name__ == "__main__":
                                     port=7030)
     
     temp_sensor.send_identification()
+    # implementar logica do envio continuo

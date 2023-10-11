@@ -35,8 +35,12 @@ class Gateway:
 
         # Enviar pedido de identificação:
         request_msgn = proto.RequestIdentification(msgn="Requested identification!")
-        udp_server_socket.sendto(request_msgn.SerializeToString(), (MULTICAST_GROUP, MULTICAST_PORT))
 
+        request_msgn_gateway = proto.GatewayMessage(type=proto.GatewayMessage.REQUEST_IDENTIFICATION, # Tipo de mensagem para o gateway
+                                                    request_identification=request_msgn)
+        
+        udp_server_socket.sendto(request_msgn_gateway.SerializeToString(), (MULTICAST_GROUP, MULTICAST_PORT))
+        
 
 
     def start_tcp_server(self, ip=TCP_SERVER_ADDRESS, port=TCP_SERVER_PORT, msgn=''):

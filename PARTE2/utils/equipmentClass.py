@@ -28,33 +28,34 @@ class Equipment:
         i_send_identification = False # Aguarda solicitação de identificação
         while i_send_identification==False:
             data, addr = udp_client_socket.recvfrom(2024)
-            msgn = proto.RequestIdentification()
-            msgn.ParseFromString(data)
-            if isinstance(msgn, proto.RequestIdentification): # Se o equipamento receber uma solicitação de identificação...
-                print(msgn)
+            gateway_msgn = proto.GatewayMessage()
+            gateway_msgn.ParseFromString(data)
+
+            if gateway_msgn.type == 4: # Se o equipamento receber uma solicitação de identificação...
+                print(gateway_msgn.request_identification.msgn)
             
-            # Enviar resposta:
-            device_info = proto.DeviceInfo(
-                        dtype=self.dtype,  # Defina o tipo do dispositivo (LAMP, TV, etc.)
-                        name=self.name,
-                        ip=self.ip,
-                        port=self.port)
-            
-            identification_message = proto.GatewayMessage(type=proto.GatewayMessage.DEVICE_IDENTIFICATION, # Tipo de mensagem para o gateway
-                                                          device_info=device_info)
-            
-            print(identification_message)
-            self.send_msgn_TCP(identification_message, "Identificação enviada com sucesso!")
-            # i_send_identification=True
+                # Enviar resposta:
+                device_info = proto.DeviceInfo(
+                            dtype=self.dtype,  # Defina o tipo do dispositivo (LAMP, TV, etc.)
+                            name=self.name,
+                            ip=self.ip,
+                            port=self.port)
+                
+                identification_message = proto.GatewayMessage(type=proto.GatewayMessage.DEVICE_IDENTIFICATION, # Tipo de mensagem para o gateway
+                                                            device_info=device_info)
+                
+                print("\nMy_identification:\n", identification_message)
+                self.send_msgn_TCP(identification_message, "Identification sent successfully!")
+                i_send_identification=True
 
 
 
-    def send_msgn_TCP(self, msgn, sucess_msg="Mensagem enviada com sucesso!"):
+    def send_msgn_TCP(self, msgn, sucess_msg="Message sent successfully!"):
         '''Responsável por enviar uma mensagem definida com protocol buffers no aquivo .proto'''
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((TCP_SERVER_ADDRESS, TCP_SERVER_PORT))
-            print("Equipamento conectado ao gateway!")
+            print("Equipment connected to the gateway!")
             # Envie a mensagem e verifique se ocorreu um erro
             if s.sendall(msgn.SerializeToString()) is None:
                 print(sucess_msg)
@@ -77,7 +78,7 @@ class Equipment:
         self.tcp_server.bind((self.ip, self.port))
         self.tcp_server.listen(3)
         print(str_server)
-        threading.Thread(target=self.th_function).start()
+        threading.Thread(target=th_function).start()
 
     
 

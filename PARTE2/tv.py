@@ -25,11 +25,12 @@ class TV(Equipment):
 
 
 if __name__ == "__main__":
-    tv = TV(proto.DeviceInfo.DeviceType.TV,
+    tv = TV(dtype=proto.DeviceInfo.DeviceType.TV,
             name="TV 1",
             ip="127.0.0.1",
             port=7060,
             current_channel="Channel 1")
     
     tv.send_identification()
-    tv.setup_server(str_server="TV is ready to receive channel change notifications.")
+    tv.setup_server(th_function=tv.listen_for_channel_changes,
+                    str_server="TV is ready to receive channel change notifications.")
