@@ -3,7 +3,7 @@ import threading
 import struct
 import json
 import smart_house_pb2 as proto
-from config import *
+from utils.config import *
 
 class Gateway:
     def __init__(self):
@@ -40,15 +40,19 @@ class Gateway:
         # Implementar lógica para receber a mensagens de identificação
 
 
-    def start_tcp_server(self, ip=TCP_SERVER_ADDRESS, port=TCP_SERVER_PORT):
+    def start_tcp_server(self, ip=TCP_SERVER_ADDRESS, port=TCP_SERVER_PORT, msgn=''):
+        '''Mensagem é a mensagem já devidamente codificada via mensagens protocol buffers definidas no arquivo .proto'''
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind((ip, port))
-        s.listen(1)
+        s.listen(5)
         while True:
             conn, addr = s.accept()
+            print(f"Conexão recebida de {addr}")
             data = conn.recv(2024)
+            msgn = proto.GatewayMessage()
+            msgn.ParseFromString(data) # Decode
             if not data: break
-            print(f"Recebido: {data}")
+            
             conn.sendall(data.upper())
             conn.close()
 

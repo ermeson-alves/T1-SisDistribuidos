@@ -1,15 +1,23 @@
 syntax = "proto3";
 
-// Mensagem de Descoberta
+
 message RequestIdentification {
     string msgn = 1;
 
 }
 
 message DeviceInfo {
-    string name = 1;
-    string ip = 2;
-    int32 port = 3;
+
+    enum DeviceType { //Tipos de dispositivos
+        LAMP = 0;
+        TV = 1;
+        TEMP_SENSOR = 2;
+    }
+
+    DeviceType dtype = 1;
+    string name = 2;
+    string ip = 3;
+    int32 port = 4;
 }
 
 message TemperatureReading {
