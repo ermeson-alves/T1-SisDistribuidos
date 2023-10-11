@@ -2,7 +2,7 @@ import socket
 import threading
 import smart_house_pb2 as proto
 from utils.config import *
-from utils.equipmetClass import *
+from utils.equipmentClass import *
 import struct
 
 
