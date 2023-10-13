@@ -27,7 +27,7 @@ class Lamp(Equipment):
             command = proto.LampControl()
             command.ParseFromString(data)
             self.is_on = command.is_on
-            print(f"Lamp is {'on' if self.is_on else 'off'}")
+            print(f"Lampada esta {'on' if self.is_on else 'off'}")
 
 
 
@@ -43,6 +43,5 @@ if __name__ == "__main__":
     send_id_thread.start()
     send_id_thread.join()
 
-
-    lamp.setup_server(th_function=lamp.listen_for_commands, str_server="Lamp is ready to receive commands.")
+    lamp.setup_server(th_function=lamp.listen_for_commands, str_server="Lampada esta pronta para receber comandos.")
     

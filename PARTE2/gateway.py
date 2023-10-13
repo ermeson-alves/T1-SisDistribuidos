@@ -28,10 +28,10 @@ class Gateway:
         start_receiver_thread.start()
 
         start_tcp_thread.start()
-        print(f"The TCP Server of Gateway is listening on the port {TCP_SERVER_PORT}\n")
+        print(f"O servidor TCP do Gateway está esperando conexoes na porta{TCP_SERVER_PORT}\n")
 
         send_disc_thread.start()
-        print("Gateway sent identification request...\n")
+        print("Gateway mandou a requisicao de identificacao...\n")
         
         command_line_thread.start()
 
@@ -55,6 +55,7 @@ class Gateway:
             if msgn.type==1: # se é uma mensagem de leitura de temperatura...
                 temp = round(msgn.temp_reading.temperature, 2)
                 logging.info(temp)
+                self.temperature = temp
 
 
 
@@ -87,7 +88,7 @@ class Gateway:
         while True:
             conn, addr = s.accept()
             print(f"Conexão recebida de {addr}")
-            data = conn.recv(2024)
+            data = conn.recv(1024)
             msgn = proto.GatewayMessage()
             msgn.ParseFromString(data) # Decode
             if not data: break
@@ -97,10 +98,9 @@ class Gateway:
                 keys = [item.split(': ')[0].replace('"', "")  for item in str(msgn.device_info).split('\n')[:-1]]
                 values = [item.split(': ')[1].replace('"', "") for item in str(msgn.device_info).split('\n')[:-1]]
                 print(keys, values)
-                self.devices[str(msgn.device_info.name)] =  dict(zip(keys, values))
+                self.devices[str(msgn.device_info.name)] = dict(zip(keys, values))
                 with open('dispositivos.json', 'w') as f:
-                    json.dump(self.devices,f)
-
+                    json.dump(self.devices, f)
 
             print(msgn)
             conn.close()
@@ -109,32 +109,49 @@ class Gateway:
     def command_line_interface(self):
 
         while True:
-            print("Gateway Command Line Interface:")
-            print("1. Control Lamp (e.g., 'lamp:on' or 'lamp:off')")
-            print("2. Exit")
-            choice = input("Enter your choice: ")
+            print("Interface de comando do Gateway:")
+            print("1. Controlar lampada ('lamp:on' ou 'lamp:off')")
+            print("2. Controlar canal da TV (tv)")
+            print("3. Acessar temperatura (temp)")
+            print("4. Sair")
+            choice = input("Digite sua escolha: ")
 
-            if choice.lower() == "exit":
+            if choice.lower() == "sair":
                 break
             elif choice.startswith("lamp:"):
-                command = choice.split(":")[1]
+                if choice == 'lamp:on':
+                    command = 'on'
+                else:
+                    command = 'off'
                 self.send_lamp_control(command)
+            elif choice.lower() == "tv":
+                canal = input("Digite o nome do canal: ")
+                self.send_tv_channel(canal)
+            elif choice.lower() == "temp":
+                print("Temperatura atual: " + str(self.temperature))
             else:
-                print("Invalid command.")
+                print("Comando invalido.")
             print(self.devices)
     
 
     def send_lamp_control(self, command):
-        if "lamp" in self.devices:
-            ip, port = self.devices["lamp"]
+        if "LAMP" in self.devices:
+            ip, port = self.devices["LAMP"]
             lamp_control = proto.LampControl(is_on=(command == "on"))
             message = proto.GatewayMessage(type=proto.GatewayMessage.LAMP_CONTROL, lamp_control=lamp_control)
+            self.send_message(ip, port, message)
+
+    def send_tv_channel(self, canal):
+        if "TV" in self.devices:
+            ip, port = self.devices["TV"]
+            channel = proto.TvChannel(channel=canal)
+            message = proto.GatewayMessage(type=proto.GatewayMessage.TV_CHANNEL, channel=channel)
             self.send_message(ip, port, message)
 
     def send_message(self, ip, port, message):
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((ip, port))
-        tcp_socket.send(message.SerializeToString())
+        tcp_socket.sendall(message.SerializeToString())
         tcp_socket.close()
 
 

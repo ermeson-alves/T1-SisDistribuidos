@@ -20,9 +20,7 @@ class TV(Equipment):
             channel_info = proto.TvChannel()
             channel_info.ParseFromString(data)
             self.current_channel = channel_info.channel
-            print(f"TV is now playing {self.current_channel}")
-
-
+            print(f"TV esta passando o canal {self.current_channel}")
 
 if __name__ == "__main__":
     tv = TV(dtype=proto.DeviceInfo.DeviceType.TV,
@@ -38,4 +36,4 @@ if __name__ == "__main__":
 
 
     tv.setup_server(th_function=tv.listen_for_channel_changes,
-                    str_server="TV is ready to receive channel change notifications.")
+                    str_server="TV esta pronta para receber comandos.")

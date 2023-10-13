@@ -45,17 +45,17 @@ class Equipment:
                                                             device_info=device_info)
                 
                 print("\nMy_identification:\n", identification_message)
-                aux = self.send_msgn_TCP(identification_message, "Identification sent successfully!")
+                aux = self.send_msgn_TCP(identification_message, "Mensagem de identificacao mandada com sucesso!")
                 i_send_identification=aux
 
 
 
-    def send_msgn_TCP(self, msgn, sucess_msg="Message sent successfully!"):
+    def send_msgn_TCP(self, msgn, sucess_msg="Mensagem mandada com sucesso!"):
         '''Responsável por enviar uma mensagem definida com protocol buffers no aquivo .proto'''
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             s.connect((TCP_SERVER_ADDRESS, TCP_SERVER_PORT))
-            print("Equipment connected to the gateway!")
+            print("Equipamento conectado ao Gateway!")
             # Envie a mensagem e verifique se ocorreu um erro
             if s.sendall(msgn.SerializeToString()) is None:
                 print(sucess_msg)
