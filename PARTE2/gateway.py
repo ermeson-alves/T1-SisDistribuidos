@@ -1,7 +1,6 @@
 import socket
-import threading
+from threading import Thread, Event
 import struct
-import json
 import smart_house_pb2 as proto
 from utils.config import *
 import logging
@@ -12,28 +11,31 @@ logging.basicConfig(filename="log/temp.log", filemode='w', encoding="utf-8", lev
 
 class Gateway:
     def __init__(self):
-        # Armazena informações dos Equipamentos
-        self.devices = {} 
+        # Lista de dispositivos
+        self.devices = []
+        # Variaveis de controle
+        self.is_running = True
+
 
         # Inicia servidor UDP para ser o receiver, com multicast, da temperatura:
-        start_receiver_thread = threading.Thread(target=self.start_receiver_temp)
+        self.start_receiver_thread = Thread(target=self.start_receiver_temp)
         # Envia mensagem solicitando que equipamentos se identifiquem:
-        send_disc_thread = threading.Thread(target=self.send_discovery_messages)
+        self.send_disc_thread = Thread(target=self.send_discovery_messages)
         # Inicia o servidor tcp do processo do gateway:
-        start_tcp_thread = threading.Thread(target=self.start_tcp_server)
+        self.start_tcp_thread = Thread(target=self.start_tcp_server)
         # Inicia linha de comando da aplicação:
-        command_line_thread = threading.Thread(target=self.command_line_interface)
+        self.command_line_thread = Thread(target=self.command_line_interface)
 
         # Inicia o servidor UDP que recebe a temperatura
-        start_receiver_thread.start()
+        self.start_receiver_thread.start()
 
-        start_tcp_thread.start()
+        self.start_tcp_thread.start()
         print(f"O servidor TCP do Gateway está esperando conexoes na porta{TCP_SERVER_PORT}\n")
 
-        send_disc_thread.start()
+        self.send_disc_thread.start()
         print("Gateway mandou a requisicao de identificacao...\n")
         
-        command_line_thread.start()
+        self.command_line_thread.start()
 
 
     def start_receiver_temp(self):
@@ -48,7 +50,7 @@ class Gateway:
 
         sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
-        while True:
+        while self.is_running:
             data = sock.recv(1024)
             msgn = proto.GatewayMessage()
             msgn.ParseFromString(data) # Decode
@@ -85,7 +87,7 @@ class Gateway:
         s.bind((ip, port))
         s.listen(5)
 
-        while True:
+        while self.is_running:
             conn, addr = s.accept()
             print(f"Conexão recebida de {addr}")
             data = conn.recv(1024)
@@ -94,21 +96,19 @@ class Gateway:
             if not data: break
             
             if msgn.type==0:
+                
+                self.devices.append([int(msgn.device_info.dtype), msgn.device_info.name, msgn.device_info.ip, msgn.device_info.port])
+                with open('dispositivos.txt', 'w') as f:
+                    f.write(str(self.devices))
 
-                keys = [item.split(': ')[0].replace('"', "")  for item in str(msgn.device_info).split('\n')[:-1]]
-                values = [item.split(': ')[1].replace('"', "") for item in str(msgn.device_info).split('\n')[:-1]]
-                print(keys, values)
-                self.devices[str(msgn.device_info.name)] = dict(zip(keys, values))
-                with open('dispositivos.json', 'w') as f:
-                    json.dump(self.devices, f)
-
-            print(msgn)
             conn.close()
 
 
     def command_line_interface(self):
 
-        while True:
+
+        while self.is_running:
+            print('T4')
             print("Interface de comando do Gateway:")
             print("1. Controlar lampada ('lamp:on' ou 'lamp:off')")
             print("2. Controlar canal da TV (tv)")
@@ -117,7 +117,8 @@ class Gateway:
             choice = input("Digite sua escolha: ")
 
             if choice.lower() == "sair":
-                break
+                self.is_running = False
+                break # é preciso encerrar todas as threads aqui
             elif choice.startswith("lamp:"):
                 if choice == 'lamp:on':
                     command = 'on'
@@ -131,15 +132,20 @@ class Gateway:
                 print("Temperatura atual: " + str(self.temperature))
             else:
                 print("Comando invalido.")
-            print(self.devices)
     
 
     def send_lamp_control(self, command):
-        if "LAMP" in self.devices:
+
+        if 0 in [device[0] for device in self.devices]:
+            idx = self.devices.index(0) # indice da lampada
+            print(self.devices[idx])
             ip, port = self.devices["LAMP"]
             lamp_control = proto.LampControl(is_on=(command == "on"))
             message = proto.GatewayMessage(type=proto.GatewayMessage.LAMP_CONTROL, lamp_control=lamp_control)
             self.send_message(ip, port, message)
+        
+        else:
+            print("Não há lampadas funcionando!")
 
     def send_tv_channel(self, canal):
         if "TV" in self.devices:

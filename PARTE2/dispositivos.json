@@ -1,1 +1,0 @@
-{"Sensor 1": {"dtype": "TEMP_SENSOR", "name": "Sensor 1", "ip": "127.0.0.1", "port": "7030"}, "TV 1": {"dtype": "TV", "name": "TV 1", "ip": "127.0.0.1", "port": "7060"}}

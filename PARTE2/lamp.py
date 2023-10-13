@@ -23,10 +23,10 @@ class Lamp(Equipment):
             data = client_socket.recv(1024)
             if not data:
                 break
-            
-            command = proto.LampControl()
-            command.ParseFromString(data)
-            self.is_on = command.is_on
+            msgn = proto.GatewayMessage()
+            command = msgn.ParseFromString(data)
+            print(command)
+            self.is_on = command.lamp_control.is_on
             print(f"Lampada esta {'on' if self.is_on else 'off'}")
 
 
@@ -44,4 +44,3 @@ if __name__ == "__main__":
     send_id_thread.join()
 
     lamp.setup_server(th_function=lamp.listen_for_commands, str_server="Lampada esta pronta para receber comandos.")
-    
