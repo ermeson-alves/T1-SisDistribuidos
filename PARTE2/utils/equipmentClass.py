@@ -45,8 +45,8 @@ class Equipment:
                                                             device_info=device_info)
                 
                 print("\nMy_identification:\n", identification_message)
-                self.send_msgn_TCP(identification_message, "Identification sent successfully!")
-                i_send_identification=True
+                aux = self.send_msgn_TCP(identification_message, "Identification sent successfully!")
+                i_send_identification=aux
 
 
 
@@ -61,10 +61,14 @@ class Equipment:
                 print(sucess_msg)
             else:
                 print("Erro ao enviar a mensagem.")
+
+            return True
         except Exception as e:
             print(f"Erro ao enviar a mensagem: {str(e)}")
+            return False
         finally:
             s.close()
+
 
 
 

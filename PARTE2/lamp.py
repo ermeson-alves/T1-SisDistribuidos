@@ -38,6 +38,11 @@ if __name__ == "__main__":
                 port = 7000,
                 is_on = False)
     
-    lamp.send_identification()
+    # Enviar identificação (O server TCP do equipamento só inicia se essa thread for concluida.)
+    send_id_thread = threading.Thread(target=lamp.send_identification)
+    send_id_thread.start()
+    send_id_thread.join()
+
+
     lamp.setup_server(th_function=lamp.listen_for_commands, str_server="Lamp is ready to receive commands.")
     

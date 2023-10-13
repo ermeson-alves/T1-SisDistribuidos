@@ -8,7 +8,7 @@ import logging
 import signal
 
 
-logging.basicConfig(filename="log/temp.log", encoding="utf-8", level=logging.INFO, format="%(asctime)s %(levelname)s:%(message)s")
+logging.basicConfig(filename="log/temp.log", filemode='w', encoding="utf-8", level=logging.INFO, format="%(asctime)s %(levelname)s:%(message)s")
 
 class Gateway:
     def __init__(self):
@@ -23,19 +23,22 @@ class Gateway:
         start_tcp_thread = threading.Thread(target=self.start_tcp_server)
         # Inicia linha de comando da aplicação:
         command_line_thread = threading.Thread(target=self.command_line_interface)
+
         # Inicia o servidor UDP que recebe a temperatura
         start_receiver_thread.start()
 
         start_tcp_thread.start()
         print(f"The TCP Server of Gateway is listening on the port {TCP_SERVER_PORT}\n")
+
         send_disc_thread.start()
         print("Gateway sent identification request...\n")
+        
         command_line_thread.start()
 
 
     def start_receiver_temp(self):
-        """Baseado em: https://wiki.python.org/moin/UdpCommunication"""
-        global exit_signal # Indica se recebeu um sinal de interrupção do teclado
+        """Essa função serve para iniciar o servidor UDP que receberá as informações do
+        sensor de temperatura. Baseado em: https://wiki.python.org/moin/UdpCommunication"""
 
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
@@ -89,9 +92,18 @@ class Gateway:
             msgn.ParseFromString(data) # Decode
             if not data: break
             
-            conn.sendall(data.upper())
-            conn.close()
+            if msgn.type==0:
 
+                keys = [item.split(': ')[0].replace('"', "")  for item in str(msgn.device_info).split('\n')[:-1]]
+                values = [item.split(': ')[1].replace('"', "") for item in str(msgn.device_info).split('\n')[:-1]]
+                print(keys, values)
+                self.devices[str(msgn.device_info.name)] =  dict(zip(keys, values))
+                with open('dispositivos.json', 'w') as f:
+                    json.dump(self.devices,f)
+
+
+            print(msgn)
+            conn.close()
 
 
     def command_line_interface(self):
@@ -109,7 +121,7 @@ class Gateway:
                 self.send_lamp_control(command)
             else:
                 print("Invalid command.")
-
+            print(self.devices)
     
 
     def send_lamp_control(self, command):

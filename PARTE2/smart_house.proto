@@ -3,7 +3,7 @@ syntax = "proto3";
 
 message RequestIdentification {
     string msgn = 1;
-
+    
 }
 
 message DeviceInfo {

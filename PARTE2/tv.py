@@ -31,6 +31,11 @@ if __name__ == "__main__":
             port=7060,
             current_channel="Channel 1")
     
-    tv.send_identification()
+    # Enviar identificação (O server TCP do equipamento só inicia se essa thread for concluida.)
+    send_id_thread = threading.Thread(target=tv.send_identification)
+    send_id_thread.start()
+    send_id_thread.join()
+
+
     tv.setup_server(th_function=tv.listen_for_channel_changes,
                     str_server="TV is ready to receive channel change notifications.")
