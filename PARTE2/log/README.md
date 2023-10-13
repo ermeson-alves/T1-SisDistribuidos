@@ -1,0 +1,1 @@
+```temp.log``` contém o histórico de temperaturas do sensor de temperatura da Casa
